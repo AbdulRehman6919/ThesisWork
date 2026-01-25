@@ -3,14 +3,14 @@ num_classes: 3
 
 TrainDataset:
   name: COCODataSet
-  image_dir: TrainingSet
+  image_dir: ./
   anno_path: 'annotations/TrainAnnots.json'
   dataset_dir: '/kaggle/working/Original Dataset'
   data_fields: ['image', 'gt_bbox', 'gt_class', 'is_crowd']
 
 EvalDataset:
   name: COCODataSet
-  image_dir: ValidationSet
+  image_dir: ./
   anno_path: 'annotations/ValidationAnnots.json'
   dataset_dir: '/kaggle/working/Original Dataset'
   allow_empty: true
