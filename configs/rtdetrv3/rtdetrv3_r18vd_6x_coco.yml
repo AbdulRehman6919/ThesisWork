@@ -13,7 +13,7 @@ log_iter: 200
 o2m_branch: True
 num_queries_o2m: 450
 
-pretrain_weights: "/kaggle/working/25.pdparams"
+pretrain_weights: "/kaggle/working/23_latest.pdparams"
 
 RTDETRV3:
   backbone: ResNetSPD
