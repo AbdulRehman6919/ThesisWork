@@ -23,9 +23,9 @@ from paddle.regularizer import L2Decay
 from ppdet.core.workspace import register, serializable
 from .name_adapter import NameAdapter
 from ..shape_spec import ShapeSpec
-from .resnet import ConvNormLayer, BottleNeck, ResNet_cfg, Blocks, SELayer
+from .resnet import ConvNormLayer, ResNet_cfg, Blocks, SELayer
 
-__all__ = ['ResNetSPD', 'BasicBlockSPD']
+__all__ = ['ResNetSPD', 'BasicBlockSPD', 'BottleNeckSPD']
 
 
 class SpaceToDepth(nn.Layer):
@@ -195,6 +195,145 @@ class BasicBlockSPD(nn.Layer):
         return out
 
 
+class BottleNeckSPD(nn.Layer):
+
+    expansion = 4
+
+    def __init__(self,
+                 ch_in,
+                 ch_out,
+                 stride,
+                 shortcut,
+                 variant='b',
+                 groups=1,
+                 base_width=4,
+                 lr=1.0,
+                 norm_type='bn',
+                 norm_decay=0.,
+                 freeze_norm=True,
+                 dcn_v2=False,
+                 std_senet=False):
+        super().__init__()
+        if variant == 'a':
+            stride1, stride2 = stride, 1
+        else:
+            stride1, stride2 = 1, stride
+
+        width = int(ch_out * (base_width / 64.)) * groups
+        self.use_spd = stride2 == 2
+
+        self.branch2a = ConvNormLayer(
+            ch_in=ch_in,
+            ch_out=width,
+            filter_size=1,
+            stride=stride1,
+            groups=1,
+            act='relu',
+            norm_type=norm_type,
+            norm_decay=norm_decay,
+            freeze_norm=freeze_norm,
+            lr=lr)
+
+        if self.use_spd:
+            self.branch2b_conv = ConvLayer(
+                ch_in=width,
+                ch_out=width,
+                filter_size=3,
+                stride=1,
+                groups=groups,
+                lr=lr)
+            self.branch2b_spd = SpaceToDepth()
+            self.branch2b_norm = _build_norm_layer(
+                ch_out=4 * width,
+                norm_type=norm_type,
+                norm_decay=norm_decay,
+                freeze_norm=freeze_norm,
+                lr=lr)
+        else:
+            self.branch2b = ConvNormLayer(
+                ch_in=width,
+                ch_out=width,
+                filter_size=3,
+                stride=stride2,
+                groups=groups,
+                act='relu',
+                norm_type=norm_type,
+                norm_decay=norm_decay,
+                freeze_norm=freeze_norm,
+                lr=lr,
+                dcn_v2=dcn_v2)
+
+        self.branch2c = ConvNormLayer(
+            ch_in=4 * width if self.use_spd else width,
+            ch_out=ch_out * self.expansion,
+            filter_size=1,
+            stride=1,
+            groups=1,
+            norm_type=norm_type,
+            norm_decay=norm_decay,
+            freeze_norm=freeze_norm,
+            lr=lr)
+
+        self.shortcut = shortcut
+        if not shortcut:
+            if variant == 'd' and stride == 2:
+                self.short = nn.Sequential()
+                self.short.add_sublayer(
+                    'pool',
+                    nn.AvgPool2D(
+                        kernel_size=2, stride=2, padding=0, ceil_mode=True))
+                self.short.add_sublayer(
+                    'conv',
+                    ConvNormLayer(
+                        ch_in=ch_in,
+                        ch_out=ch_out * self.expansion,
+                        filter_size=1,
+                        stride=1,
+                        norm_type=norm_type,
+                        norm_decay=norm_decay,
+                        freeze_norm=freeze_norm,
+                        lr=lr))
+            else:
+                self.short = ConvNormLayer(
+                    ch_in=ch_in,
+                    ch_out=ch_out * self.expansion,
+                    filter_size=1,
+                    stride=stride,
+                    norm_type=norm_type,
+                    norm_decay=norm_decay,
+                    freeze_norm=freeze_norm,
+                    lr=lr)
+
+        self.std_senet = std_senet
+        if self.std_senet:
+            self.se = SELayer(ch_out * self.expansion)
+
+    def forward(self, inputs):
+        out = self.branch2a(inputs)
+
+        if self.use_spd:
+            out = self.branch2b_conv(out)
+            out = self.branch2b_spd(out)
+            out = self.branch2b_norm(out)
+            out = F.relu(out)
+        else:
+            out = self.branch2b(out)
+
+        out = self.branch2c(out)
+
+        if self.std_senet:
+            out = self.se(out)
+
+        if self.shortcut:
+            short = inputs
+        else:
+            short = self.short(inputs)
+
+        out = paddle.add(x=out, y=short)
+        out = F.relu(out)
+        return out
+
+
 @register
 @serializable
 class ResNetSPD(nn.Layer):
@@ -217,7 +356,7 @@ class ResNetSPD(nn.Layer):
                  std_senet=False,
                  freeze_stem_only=False):
         """
-        ResNet backbone with SPD-Conv downsampling blocks for depth < 50.
+        ResNet backbone with SPD-Conv downsampling blocks.
         """
         super().__init__()
         self._model_type = 'ResNetSPD' if groups == 1 else 'ResNeXtSPD'
@@ -275,7 +414,7 @@ class ResNetSPD(nn.Layer):
 
         self.ch_in = ch_in
         ch_out_list = [64, 128, 256, 512]
-        block = BottleNeck if depth >= 50 else BasicBlockSPD
+        block = BottleNeckSPD if depth >= 50 else BasicBlockSPD
 
         self._out_channels = [block.expansion * v for v in ch_out_list]
         self._out_strides = [4, 8, 16, 32]
