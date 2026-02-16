@@ -1,0 +1,35 @@
+_BASE_: [
+  '../datasets/coco_detection_latest.yml',
+  '../runtime.yml',
+  '_base_/optimizer_6x.yml',
+  '_base_/rtdetrv3_r50vd.yml',
+  '_base_/rtdetr_reader.yml',
+]
+
+weights: output/rtdetrv3_r50vd_6x_coco_spd/model_final
+find_unused_parameters: True
+log_iter: 200
+
+o2m_branch: True
+num_queries_o2m: 450
+
+pretrain_weights: ""
+
+RTDETRV3:
+  backbone: ResNetSPD
+
+ResNetSPD:
+  depth: 50
+  variant: d
+  return_idx: [1, 2, 3]
+  freeze_at: -1
+  freeze_norm: false
+  norm_decay: 0.
+
+RTDETRTransformerv3:
+  eval_idx: -1
+  num_decoder_layers: 6
+  num_noises: 2
+  num_noise_queries: [300, 300]
+  num_noise_denoising: 100
+  learnt_init_query: False
