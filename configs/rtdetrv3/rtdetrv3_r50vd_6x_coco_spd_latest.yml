@@ -1,7 +1,7 @@
 _BASE_: [
   '../datasets/coco_detection_latest.yml',
   '../runtime.yml',
-  '_base_/optimizer_6x.yml',
+  '_base_/optimizer_6x_latest.yml',
   '_base_/rtdetrv3_r50vd.yml',
   '_base_/rtdetr_reader.yml',
 ]
@@ -13,7 +13,7 @@ log_iter: 200
 o2m_branch: True
 num_queries_o2m: 450
 
-pretrain_weights: "/kaggle/working/ThesisWork/output/19.pdparams"
+pretrain_weights: "/kaggle/working/ThesisWork/output/42.pdparams"
 
 RTDETRV3:
   backbone: ResNetSPD
