@@ -142,12 +142,14 @@ def cocoapi_eval(jsonfile,
         cat_ids = coco_gt.getCatIds()
         # precision: (iou, recall, cls, area range, max dets)
         assert len(cat_ids) == precisions.shape[2]
+        iou50_idx = np.where(np.isclose(coco_eval.params.iouThrs, 0.5))[0]
+        iou50_idx = int(iou50_idx[0]) if len(iou50_idx) > 0 else 0
         results_per_category = []
         for idx, catId in enumerate(cat_ids):
             # area range index 0: all area ranges
             # max dets index -1: typically 100 per image
             nm = coco_gt.loadCats(catId)[0]
-            precision = precisions[0, :, idx, 0, -1] if ap50 else precisions[:, :, idx, 0, -1]
+            precision = precisions[iou50_idx, :, idx, 0, -1] if ap50 else precisions[:, :, idx, 0, -1]
             precision = precision[precision > -1]
             if precision.size:
                 ap = np.mean(precision)
@@ -155,7 +157,7 @@ def cocoapi_eval(jsonfile,
                 ap = float('nan')
             results_per_category.append(
                 (str(nm["name"]), '{:0.3f}'.format(float(ap))))
-            pr_array = precisions[0, :, idx, 0, 2]
+            pr_array = precisions[iou50_idx, :, idx, 0, 2] if ap50 else precisions[0, :, idx, 0, 2]
             recall_array = np.arange(0.0, 1.01, 0.01)
             draw_pr_curve(
                 pr_array,
@@ -165,13 +167,14 @@ def cocoapi_eval(jsonfile,
 
         num_columns = min(6, len(results_per_category) * 2)
         results_flatten = list(itertools.chain(*results_per_category))
-        headers = ['category', 'AP'] * (num_columns // 2)
+        headers = ['category', 'AP50'] * (num_columns // 2) if ap50 else ['category', 'AP'] * (num_columns // 2)
         results_2d = itertools.zip_longest(
             *[results_flatten[i::num_columns] for i in range(num_columns)])
         table_data = [headers]
         table_data += [result for result in results_2d]
         table = AsciiTable(table_data)
-        logger.info('Per-category of {} AP: \n{}'.format(style, table.table))
+        logger.info('Per-category of {} {}: \n{}'.format(
+            style, 'AP50' if ap50 else 'AP', table.table))
         logger.info("per-category PR curve has output to {} folder.".format(
             style + '_pr_curve'))
     # flush coco evaluation result
