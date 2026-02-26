@@ -73,6 +73,7 @@ def parse_args():
     parser.add_argument(
         "--ap50",
         action="store_true",
+        default=None,
         help="report per-category AP at IoU=0.50 only.")
 
     parser.add_argument(

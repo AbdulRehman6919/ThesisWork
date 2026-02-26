@@ -126,6 +126,7 @@ def cocoapi_eval(jsonfile,
         coco_eval = COCOeval(coco_gt, coco_dt, style)
     if ap50:
         coco_eval.params.iouThrs = np.array([0.5])
+        coco_eval.params.maxDets = list(max_dets[:1])
     coco_eval.evaluate()
     coco_eval.accumulate()
     coco_eval.summarize()
@@ -147,7 +148,7 @@ def cocoapi_eval(jsonfile,
             # area range index 0: all area ranges
             # max dets index -1: typically 100 per image
             nm = coco_gt.loadCats(catId)[0]
-            precision = precisions[:, :, idx, 0, -1]
+        precision = precisions[0, :, idx, 0, -1] if ap50 else precisions[:, :, idx, 0, -1]
             precision = precision[precision > -1]
             if precision.size:
                 ap = np.mean(precision)

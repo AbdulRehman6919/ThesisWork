@@ -79,7 +79,7 @@ class COCOMetric(Metric):
         if self.clsid2catid is None:
             self.clsid2catid, _ = get_categories('COCO', anno_file)
         self.classwise = kwargs.get('classwise', False)
-        self.ap50 = kwargs.get('ap50', False)
+        self.ap50 = bool(kwargs.get('ap50', False))
         self.output_eval = kwargs.get('output_eval', None)
         # TODO: bias should be unified
         self.bias = kwargs.get('bias', 0)
@@ -239,7 +239,7 @@ class LVISMetric(Metric):
         if self.clsid2catid is None:
             self.clsid2catid, _ = get_categories('COCO', anno_file)
         self.classwise = kwargs.get('classwise', False)
-        self.ap50 = kwargs.get('ap50', False)
+        self.ap50 = bool(kwargs.get('ap50', False))
         self.output_eval = kwargs.get('output_eval', None)
         # TODO: bias should be unified
         self.bias = kwargs.get('bias', 0)
