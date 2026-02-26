@@ -126,7 +126,6 @@ def cocoapi_eval(jsonfile,
         coco_eval = COCOeval(coco_gt, coco_dt, style)
     if ap50:
         coco_eval.params.iouThrs = np.array([0.5])
-        coco_eval.params.maxDets = list(max_dets[:1])
     coco_eval.evaluate()
     coco_eval.accumulate()
     coco_eval.summarize()
