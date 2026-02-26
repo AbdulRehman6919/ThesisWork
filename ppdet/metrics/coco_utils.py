@@ -84,6 +84,7 @@ def cocoapi_eval(jsonfile,
                  anno_file=None,
                  max_dets=(100, 300, 1000),
                  classwise=False,
+                 ap50=False,
                  sigmas=None,
                  use_area=True):
     """
@@ -123,6 +124,8 @@ def cocoapi_eval(jsonfile,
         coco_eval = COCOeval(coco_gt, coco_dt, style, sigmas, use_area)
     else:
         coco_eval = COCOeval(coco_gt, coco_dt, style)
+    if ap50:
+        coco_eval.params.iouThrs = np.array([0.5])
     coco_eval.evaluate()
     coco_eval.accumulate()
     coco_eval.summarize()

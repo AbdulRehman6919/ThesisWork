@@ -291,6 +291,7 @@ class Trainer(object):
             self._metrics = []
             return
         classwise = self.cfg['classwise'] if 'classwise' in self.cfg else False
+        ap50 = self.cfg['ap50'] if 'ap50' in self.cfg else False
         if self.cfg.metric == 'COCO' or self.cfg.metric == "SNIPERCOCO" or self.cfg.metric == 'LVIS':
             # TODO: bias should be unified
             bias = 1 if self.cfg.get('bias', False) else 0
@@ -323,6 +324,7 @@ class Trainer(object):
                         anno_file=anno_file,
                         clsid2catid=clsid2catid,
                         classwise=classwise,
+                        ap50=ap50,
                         output_eval=output_eval,
                         bias=bias,
                         IouType=IouType,
@@ -335,6 +337,7 @@ class Trainer(object):
                         anno_file=anno_file,
                         clsid2catid=clsid2catid,
                         classwise=classwise,
+                        ap50=ap50,
                         output_eval=output_eval,
                         bias=bias,
                         IouType=IouType,
@@ -347,6 +350,7 @@ class Trainer(object):
                         dataset=dataset,
                         clsid2catid=clsid2catid,
                         classwise=classwise,
+                        ap50=ap50,
                         output_eval=output_eval,
                         bias=bias,
                         IouType=IouType,

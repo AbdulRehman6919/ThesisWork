@@ -70,6 +70,10 @@ def parse_args():
         "--classwise",
         action="store_true",
         help="whether per-category AP and draw P-R Curve or not.")
+    parser.add_argument(
+        "--ap50",
+        action="store_true",
+        help="report per-category AP at IoU=0.50 only.")
 
     parser.add_argument(
         '--save_prediction_only',

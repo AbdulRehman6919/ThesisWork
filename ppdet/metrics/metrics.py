@@ -79,6 +79,7 @@ class COCOMetric(Metric):
         if self.clsid2catid is None:
             self.clsid2catid, _ = get_categories('COCO', anno_file)
         self.classwise = kwargs.get('classwise', False)
+        self.ap50 = kwargs.get('ap50', False)
         self.output_eval = kwargs.get('output_eval', None)
         # TODO: bias should be unified
         self.bias = kwargs.get('bias', 0)
@@ -148,7 +149,8 @@ class COCOMetric(Metric):
                     output,
                     'bbox',
                     anno_file=self.anno_file,
-                    classwise=self.classwise)
+                    classwise=self.classwise,
+                    ap50=self.ap50)
                 self.eval_results['bbox'] = bbox_stats
                 sys.stdout.flush()
 
@@ -168,7 +170,8 @@ class COCOMetric(Metric):
                     output,
                     'segm',
                     anno_file=self.anno_file,
-                    classwise=self.classwise)
+                    classwise=self.classwise,
+                    ap50=self.ap50)
                 self.eval_results['mask'] = seg_stats
                 sys.stdout.flush()
 
@@ -188,7 +191,8 @@ class COCOMetric(Metric):
                     output,
                     'segm',
                     anno_file=self.anno_file,
-                    classwise=self.classwise)
+                    classwise=self.classwise,
+                    ap50=self.ap50)
                 self.eval_results['mask'] = seg_stats
                 sys.stdout.flush()
 
@@ -216,6 +220,7 @@ class COCOMetric(Metric):
                     style,
                     anno_file=self.anno_file,
                     classwise=self.classwise,
+                    ap50=self.ap50,
                     sigmas=sigmas,
                     use_area=use_area)
                 self.eval_results['keypoint'] = keypoint_stats
@@ -234,6 +239,7 @@ class LVISMetric(Metric):
         if self.clsid2catid is None:
             self.clsid2catid, _ = get_categories('COCO', anno_file)
         self.classwise = kwargs.get('classwise', False)
+        self.ap50 = kwargs.get('ap50', False)
         self.output_eval = kwargs.get('output_eval', None)
         # TODO: bias should be unified
         self.bias = kwargs.get('bias', 0)
