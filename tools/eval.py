@@ -167,6 +167,9 @@ def run(FLAGS, cfg):
 def main():
     FLAGS = parse_args()
     cfg = load_config(FLAGS.config)
+    if FLAGS.ap50 is None and hasattr(FLAGS, 'ap50'):
+        # Keep YAML value when --ap50 is not explicitly passed.
+        delattr(FLAGS, 'ap50')
     merge_args(cfg, FLAGS)
     merge_config(FLAGS.opt)
 
